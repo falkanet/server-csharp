@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using SPTarkov.Common.Extensions;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
+using SPTarkov.Server.Core.Constants;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
@@ -32,6 +33,20 @@ public class SeasonalEventEffects(
 )
 {
     /// <summary>
+    ///     seasonalevents.json/botAppearanceChanges still uses the old "bear"/"usec" bot keys, which were merged into
+    ///     "pmcbear"/"pmcusec" (see issue #137). Map them so the appearance changes still reach PMCs.
+    /// </summary>
+    protected static string MapLegacyPmcBotType(string botType)
+    {
+        return botType.ToLowerInvariant() switch
+        {
+            "bear" => Roles.PmcBear,
+            "usec" => Roles.PmcUsec,
+            var other => other,
+        };
+    }
+
+    /// <summary>
     ///     Adjust the weights for all bots body part appearances, based on data inside
     ///     seasonalevents.json/botAppearanceChanges
     /// </summary>
@@ -46,7 +61,7 @@ public class SeasonalEventEffects(
 
         foreach (var (botType, botAppearanceAdjustments) in appearanceAdjustments)
         {
-            if (!botTable.Types.TryGetValue(botType, out var bot))
+            if (!botTable.Types.TryGetValue(MapLegacyPmcBotType(botType), out var bot))
             {
                 // Bot defined in config doesn't exist
                 continue;
