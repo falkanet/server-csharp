@@ -645,7 +645,7 @@ public class SeasonalEventService(
 
         foreach (var (botType, botAppearanceAdjustments) in appearanceAdjustments)
         {
-            if (!botTable.Types.TryGetValue(botType, out var bot))
+            if (!botTable.Types.TryGetValue(MapLegacyPmcBotType(botType), out var bot))
             {
                 // Bot defined in config doesn't exist
                 continue;
@@ -1061,6 +1061,20 @@ public class SeasonalEventService(
     }
 
     /// <summary>
+    ///     seasonalevents.json still uses the old "bear"/"usec" bot keys, which were merged into
+    ///     "pmcbear"/"pmcusec" (see issue #137). Map them so event changes still reach PMCs.
+    /// </summary>
+    protected static string MapLegacyPmcBotType(string botType)
+    {
+        return botType.ToLowerInvariant() switch
+        {
+            "bear" => Roles.PmcBear,
+            "usec" => Roles.PmcUsec,
+            var other => other,
+        };
+    }
+
+    /// <summary>
     ///     Read in data from seasonalEvents.json and add found equipment items to bots
     /// </summary>
     /// <param name="eventType">Name of the event to read equipment in from config</param>
@@ -1077,8 +1091,7 @@ public class SeasonalEventService(
         // Iterate over bots with changes to apply
         foreach (var botKvP in botGearChanges)
         {
-            var botToUpdate = botTable.Types[botKvP.Key.ToLowerInvariant()];
-            if (botToUpdate is null)
+            if (!botTable.Types.TryGetValue(MapLegacyPmcBotType(botKvP.Key), out var botToUpdate) || botToUpdate is null)
             {
                 logger.Warning(serverLocalisationService.GetText("gameevent-bot_not_found", botKvP));
                 continue;
