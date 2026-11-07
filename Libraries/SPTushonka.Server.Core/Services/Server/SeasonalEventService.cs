@@ -470,13 +470,15 @@ public class SeasonalEventService(
     }
 
     /// <summary>
-    ///     Get the underlying bot type for an event bot e.g. `peacefullZryachiyEvent` will return `bossZryachiy`
+    ///     Get the underlying bot type for an event bot e.g. `peacefullZryachiyEvent` will return `bossZryachiy`.
+    ///     A role not in eventBotMapping is its own bot type (e.g. `bossScourgeEventLab`) and is returned unchanged:
+    ///     returning null left the bot without a role, so none was generated
     /// </summary>
     /// <param name="eventBotRole">Event bot role type</param>
     /// <returns>Bot role as string</returns>
     public string GetBaseRoleForEventBot(string? eventBotRole)
     {
-        return seasonalEventConfig.EventBotMapping.GetValueOrDefault(eventBotRole, null);
+        return seasonalEventConfig.EventBotMapping.GetValueOrDefault(eventBotRole, eventBotRole);
     }
 
     /// <summary>
